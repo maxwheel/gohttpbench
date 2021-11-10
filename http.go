@@ -260,7 +260,9 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 	}
 	for _, header := range config.headers {
 		pair := strings.Split(header, ":")
-		fmt.Printf("added header '%s':'%s", pair[0], pair[1])
+		if Verbosity > 0 {
+			fmt.Printf("added header '%s':'%s", pair[0], pair[1])
+		}
 		request.Header.Add(pair[0], pair[1])
 	}
 
@@ -269,7 +271,9 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 	}
 	for _, cookie := range config.cookies {
 		pair := strings.Split(cookie, "=")
-		fmt.Printf("added cookie '%s'='%s", pair[0], pair[1])
+		if Verbosity > 0 {
+			fmt.Printf("added cookie '%s'='%s", pair[0], pair[1])
+		}
 		c := &http.Cookie{Name: pair[0], Value: pair[1]}
 		request.AddCookie(c)
 	}
