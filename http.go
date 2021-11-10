@@ -215,17 +215,32 @@ func NewClient(config *Config) *http.Client {
 			transport.Proxy = http.ProxyURL(config.proxyServer)
 		case "http":
 			transport.Proxy = http.ProxyURL(config.proxyServer)
-			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			if config.enableHTTP2 {
+				if Verbosity > 0 {
+					fmt.Println("HTTP2 enabled.")
+				}
+			} else {
+				transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			}
 		case "https":
 			transport.Proxy = http.ProxyURL(config.proxyServer)
-			if !config.enableHTTP2 {
+			if config.enableHTTP2 {
+				if Verbosity > 0 {
+					fmt.Println("HTTP2 enabled.")
+				}
+			} else {
 				transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
-			} else if Verbosity > 0 {
-				fmt.Println("HTTP2 not enabled.")
 			}
 		case "":
+			// treat as http
 			transport.Proxy = http.ProxyURL(config.proxyServer)
-			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			if config.enableHTTP2 {
+				if Verbosity > 0 {
+					fmt.Println("HTTP2 enabled.")
+				}
+			} else {
+				transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			}
 		default:
 			fmt.Printf("cannot handle proxy %s://%s", config.proxyServer.Scheme, config.proxyServer.Host)
 		}
@@ -255,25 +270,13 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 		request.Header.Set("Connection", "keep-alive")
 	}
 
-	if Verbosity > 0 {
-		fmt.Println("Customized headers: ", len(config.headers))
-	}
 	for _, header := range config.headers {
 		pair := strings.Split(header, ":")
-		if Verbosity > 0 {
-			fmt.Printf("added header '%s':'%s", pair[0], pair[1])
-		}
 		request.Header.Add(pair[0], pair[1])
 	}
 
-	if Verbosity > 0 {
-		fmt.Println("Customized cookies: ", len(config.cookies))
-	}
 	for _, cookie := range config.cookies {
 		pair := strings.Split(cookie, "=")
-		if Verbosity > 0 {
-			fmt.Printf("added cookie '%s'='%s", pair[0], pair[1])
-		}
 		c := &http.Cookie{Name: pair[0], Value: pair[1]}
 		request.AddCookie(c)
 	}
