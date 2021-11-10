@@ -47,6 +47,7 @@ Options are:
   -v=0: How much troubleshooting info to print
   -z=false: Use HTTP Gzip feature
   -X="": Use socks5/http/https proxy (ignore invalid certs). [Protocal://]Proxyhost:Port
+  -http2=false: Support http2 TLS
 ```
 
 ### Example:

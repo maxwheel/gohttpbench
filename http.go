@@ -90,6 +90,7 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 
 		defer func() {
 			if r := recover(); r != nil {
+				// fmt.Println(r)
 				if Err, ok := r.(error); ok {
 					record.Error = Err
 				} else {
@@ -102,6 +103,7 @@ func (h *HTTPWorker) send(request *http.Request) (asyncResult chan *Record) {
 			}
 
 			if record.Error != nil {
+				// fmt.Println(record.Error)
 				TraceException(record.Error)
 			}
 
@@ -203,6 +205,7 @@ func NewClient(config *Config) *http.Client {
 		DisableCompression: !config.gzip,
 		DisableKeepAlives:  !config.keepAlive,
 		TLSClientConfig:    tlsconfig,
+		// MaxIdleConnsPerHost: 50,
 	}
 
 	// set proxy
@@ -215,7 +218,11 @@ func NewClient(config *Config) *http.Client {
 			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
 		case "https":
 			transport.Proxy = http.ProxyURL(config.proxyServer)
-			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			if !config.enableHTTP2 {
+				transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+			} else if Verbosity > 0 {
+				fmt.Println("HTTP2 not enabled.")
+			}
 		case "":
 			transport.Proxy = http.ProxyURL(config.proxyServer)
 			transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
@@ -248,13 +255,25 @@ func NewHTTPRequest(config *Config) (request *http.Request, err error) {
 		request.Header.Set("Connection", "keep-alive")
 	}
 
+	if Verbosity > 0 {
+		fmt.Println("Customized headers: ", len(config.headers))
+	}
 	for _, header := range config.headers {
 		pair := strings.Split(header, ":")
+		if Verbosity > 0 {
+			fmt.Printf("added header '%s':'%s", pair[0], pair[1])
+		}
 		request.Header.Add(pair[0], pair[1])
 	}
 
+	if Verbosity > 0 {
+		fmt.Println("Customized cookies: ", len(config.cookies))
+	}
 	for _, cookie := range config.cookies {
 		pair := strings.Split(cookie, "=")
+		if Verbosity > 0 {
+			fmt.Printf("added cookie '%s'='%s", pair[0], pair[1])
+		}
 		c := &http.Cookie{Name: pair[0], Value: pair[1]}
 		request.AddCookie(c)
 	}

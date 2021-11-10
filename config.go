@@ -30,6 +30,7 @@ type Config struct {
 	basicAuthentication string
 	userAgent           string
 	proxyServer         *url.URL
+	enableHTTP2         bool
 
 	url  string
 	host string
@@ -60,6 +61,7 @@ func LoadConfig() (config *Config, err error) {
 	basicAuthentication := flag.String("A", "", "Add Basic WWW Authentication, the attributes are a colon separated username and password.")
 	keepAlive := flag.Bool("k", false, "Use HTTP KeepAlive feature")
 	gzip := flag.Bool("z", false, "Use HTTP Gzip feature")
+	http2 := flag.Bool("http2", false, "enable http2 connection")
 
 	showHelp := flag.Bool("h", false, "Display usage information (this message)")
 
@@ -92,6 +94,7 @@ func LoadConfig() (config *Config, err error) {
 	config = &Config{}
 	config.requests = *request
 	config.concurrency = *concurrency
+	config.enableHTTP2 = *http2
 
 	switch {
 	case *postFile != "":
