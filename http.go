@@ -208,6 +208,10 @@ func NewClient(config *Config) *http.Client {
 		// MaxIdleConnsPerHost: 50,
 	}
 
+	if config.enableHTTP2 {
+		transport.ForceAttemptHTTP2 = true
+	}
+
 	// set proxy
 	if config.proxyServer != nil {
 		switch config.proxyServer.Scheme {
